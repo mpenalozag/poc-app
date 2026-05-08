@@ -1,0 +1,4 @@
+# Variante para Escenario 4: imagen que crashea al boot.
+# CMD reemplaza el puma server por un comando que exit 1 inmediato → readinessProbe nunca pasa.
+FROM ghcr.io/mpenalozag/poc-app:v5
+CMD ["/bin/false"]
