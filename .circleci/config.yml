@@ -20,7 +20,7 @@ jobs:
       - run:
           name: Build and push arm64 image (kind cluster en Mac es arm64)
           command: |
-            docker buildx build --platform linux/arm64 \
+            docker buildx build --platform linux/amd64,linux/arm64 \
               -t ghcr.io/mpenalozag/poc-app:${CIRCLE_SHA1} \
               --push .
 
