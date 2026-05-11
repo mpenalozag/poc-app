@@ -1,0 +1,17 @@
+version: 2.1
+
+# Placeholder config — se reemplaza después de que el project quede setupeado
+# en CircleCI y tengamos el SSH key fingerprint para el bumper orb.
+jobs:
+  setup-placeholder:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+      - run:
+          name: Placeholder
+          command: echo "CircleCI project setup OK. Waiting for real config."
+
+workflows:
+  setup:
+    jobs:
+      - setup-placeholder
