@@ -1,17 +1,55 @@
 version: 2.1
 
-# Placeholder config — se reemplaza después de que el project quede setupeado
-# en CircleCI y tengamos el SSH key fingerprint para el bumper orb.
+orbs:
+  bumper: mpenalozag/kustomize-bumper@dev:first
+
 jobs:
-  setup-placeholder:
+  build_and_push_image:
     docker:
       - image: cimg/base:2024.05
     steps:
+      - setup_remote_docker
       - run:
-          name: Placeholder
-          command: echo "CircleCI project setup OK. Waiting for real config."
+          name: Login to GHCR
+          command: echo "$GHCR_TOKEN" | docker login ghcr.io -u mpenalozag --password-stdin
+      - run:
+          name: Re-tag and push image (PoC — no rebuild, mismo digest base)
+          command: |
+            BASE_TAG=153fd14ad71cfebc21a61cbfb4c05d44d0742258
+            docker pull ghcr.io/mpenalozag/poc-app:${BASE_TAG}
+            docker tag ghcr.io/mpenalozag/poc-app:${BASE_TAG} ghcr.io/mpenalozag/poc-app:${CIRCLE_SHA1}
+            docker push ghcr.io/mpenalozag/poc-app:${CIRCLE_SHA1}
 
 workflows:
-  setup:
+  stg-deploy:
+    when:
+      equal: [main, << pipeline.git.branch >>]
     jobs:
-      - setup-placeholder
+      - build_and_push_image
+      - bumper/bump:
+          name: bump-stg
+          requires: [build_and_push_image]
+          env: stg
+          manifests_path: stg
+          image_registry: ghcr.io/mpenalozag/poc-app
+          ssh_key_fingerprint: "SHA256:b3yRPGVHyN+ajw31VwwlbnmS1XWIVgZCunE4+LwyH7M"
+
+  prd-deploy:
+    when:
+      equal: [production, << pipeline.git.branch >>]
+    jobs:
+      - build_and_push_image
+      - bumper/bump:
+          name: bump-prd
+          requires: [build_and_push_image]
+          env: prd
+          manifests_path: prd
+          image_registry: ghcr.io/mpenalozag/poc-app
+          ssh_key_fingerprint: "SHA256:b3yRPGVHyN+ajw31VwwlbnmS1XWIVgZCunE4+LwyH7M"
+      - bumper/bump:
+          name: bump-prd-west-sim
+          requires: [build_and_push_image]
+          env: prd
+          manifests_path: prd-west-sim
+          image_registry: ghcr.io/mpenalozag/poc-app
+          ssh_key_fingerprint: "SHA256:b3yRPGVHyN+ajw31VwwlbnmS1XWIVgZCunE4+LwyH7M"
