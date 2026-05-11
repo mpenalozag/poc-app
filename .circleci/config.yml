@@ -5,20 +5,24 @@ orbs:
 
 jobs:
   build_and_push_image:
-    docker:
-      - image: cimg/base:2024.05
+    machine:
+      image: ubuntu-2204:current
     steps:
-      - setup_remote_docker
+      - checkout
       - run:
           name: Login to GHCR
           command: echo "$GHCR_TOKEN" | docker login ghcr.io -u mpenalozag --password-stdin
       - run:
-          name: Re-tag and push image (PoC — no rebuild, mismo digest base)
+          name: Setup QEMU + buildx
           command: |
-            BASE_TAG=153fd14ad71cfebc21a61cbfb4c05d44d0742258
-            docker pull ghcr.io/mpenalozag/poc-app:${BASE_TAG}
-            docker tag ghcr.io/mpenalozag/poc-app:${BASE_TAG} ghcr.io/mpenalozag/poc-app:${CIRCLE_SHA1}
-            docker push ghcr.io/mpenalozag/poc-app:${CIRCLE_SHA1}
+            docker run --privileged --rm tonistiigi/binfmt --install all
+            docker buildx create --use --name builder --bootstrap
+      - run:
+          name: Build and push arm64 image (kind cluster en Mac es arm64)
+          command: |
+            docker buildx build --platform linux/arm64 \
+              -t ghcr.io/mpenalozag/poc-app:${CIRCLE_SHA1} \
+              --push .
 
 workflows:
   stg-deploy:
