@@ -22,7 +22,8 @@ jobs:
           command: |
             # Push both tags: stg uses :sha, prd uses :prod-sha (en producción Fintoc
             # son builds separados por branch, acá los pusheamos los dos en cada run para PoC).
-            docker buildx build --platform linux/arm64 \
+            # Multi-arch (amd64+arm64) para soportar GKE (amd64) y kind on Mac (arm64).
+            docker buildx build --platform linux/amd64,linux/arm64 \
               -t ghcr.io/mpenalozag/poc-app:${CIRCLE_SHA1} \
               -t ghcr.io/mpenalozag/poc-app:prod-${CIRCLE_SHA1} \
               --push .
