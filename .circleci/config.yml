@@ -20,8 +20,11 @@ jobs:
       - run:
           name: Build and push arm64 image (kind cluster en Mac es arm64)
           command: |
+            # Push both tags: stg uses :sha, prd uses :prod-sha (en producción Fintoc
+            # son builds separados por branch, acá los pusheamos los dos en cada run para PoC).
             docker buildx build --platform linux/arm64 \
               -t ghcr.io/mpenalozag/poc-app:${CIRCLE_SHA1} \
+              -t ghcr.io/mpenalozag/poc-app:prod-${CIRCLE_SHA1} \
               --push .
 
 workflows:
